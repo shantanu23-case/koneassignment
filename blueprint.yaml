@@ -1,0 +1,18 @@
+tech_stack: python
+build_type: pip
+deployment_method: docker
+branching:
+  branches:
+    - dev
+    - staging
+    - main
+  tagging: semantic
+stages:
+  - lint
+  - test
+  - security_scan
+  - build
+  - deploy
+custom_settings:
+  coverage_threshold: 80
+  python_version: "3.9"

@@ -1,0 +1,69 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - dev
+      - staging
+      - main
+  pull_request:
+    branches:
+      - dev
+      - staging
+      - main
+
+jobs:
+  parse-blueprint:
+    runs-on: ubuntu-latest
+    outputs:
+      tech_stack: ${{ steps.parse.outputs.tech_stack }}
+      stages: ${{ steps.parse.outputs.stages }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install yq
+        run: |
+          sudo wget https://github.com/mikefarah/yq/releases/download/v4.35.2/yq_linux_amd64 -O /usr/bin/yq
+          sudo chmod +x /usr/bin/yq
+
+      - name: Parse blueprint.yml
+        id: parse
+        run: |
+          TECH_STACK=$(yq e '.tech_stack' blueprint.yml)
+          STAGES=$(yq e '.stages | join(",")' blueprint.yml)
+          echo "tech_stack=$TECH_STACK" >> $GITHUB_OUTPUT
+          echo "stages=$STAGES" >> $GITHUB_OUTPUT
+
+  ci-cd:
+    needs: parse-blueprint
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        stage: ${{ fromJSON(format('["{0}"]', needs.parse-blueprint.outputs.stages)) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Trigger workflow for ${{ needs.parse-blueprint.outputs.tech_stack }} - ${{ matrix.stage }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const techStack = "${{ needs.parse-blueprint.outputs.tech_stack }}";
+            const stage = "${{ matrix.stage }}";
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: `${techStack}/${stage}.yml`,
+              ref: context.ref,
+              inputs: {
+                branch: context.ref.replace('refs/heads/', '')
+              }
+            });
+
+      - name: Run tagging for main branch
+        if: github.ref == 'refs/heads/main' && matrix.stage == 'deploy'
+        run: |
+          ./scripts/tag.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

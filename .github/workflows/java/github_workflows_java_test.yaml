@@ -1,0 +1,29 @@
+name: Java Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to run the workflow on'
+        required: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Install Maven
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y maven
+
+      - name: Run tests
+        run: ./scripts/test.sh --tool=mvn --coverage-threshold=${{ fromJSON(yaml.read('blueprint.yml').custom_settings.coverage_threshold) || 80 }}

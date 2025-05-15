@@ -1,0 +1,25 @@
+name: Python Security Scan
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to run the workflow on'
+        required: true
+
+jobs:
+  security_scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Trivy
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget
+          wget https://github.com/aquasecurity/trivy/releases/download/v0.45.1/trivy_0.45.1_Linux-64bit.deb
+          sudo dpkg -i trivy_0.45.1_Linux-64bit.deb
+
+      - name: Run security scan
+        run: ./scripts/security_scan.sh --tool=trivy
