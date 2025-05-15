@@ -1,0 +1,26 @@
+name: Lint
+
+on:
+  pull_request:
+    branches: [main, release/*]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Run Linter
+      run: |
+        case "${{ vars.TECH_STACK }}" in
+          "java")
+            mvn checkstyle:check
+            ;;
+          "python")
+            pip install pylint
+            pylint src/
+            ;;
+          "nodejs")
+            npm install
+            npm run lint
+            ;;
+        esac

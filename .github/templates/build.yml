@@ -1,0 +1,28 @@
+name: Build
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build Project
+      run: |
+        case "${{ env.BUILD_TOOL }}" in
+          "maven")
+            mvn clean package
+            ;;
+          "gradle")
+            ./gradlew build
+            ;;
+          "npm")
+            npm install
+            npm run build
+            ;;
+        esac
+    - uses: actions/upload-artifact@v3
+      with:
+        name: build-output
+        path: |
+          target/*.jar
+          build/libs/*.jar
+          dist/

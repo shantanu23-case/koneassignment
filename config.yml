@@ -1,0 +1,17 @@
+project:
+  name: "my-project"
+  tech_stack: "python"  # (java, nodejs, cpp, dotnet)
+  build_tool: "pip"     # (npm, maven, gradle, make)
+  deployment: "terraform" # (cdk, cloudformation, sam, docker)
+
+stages:
+  - lint
+  - test
+  - build
+  - security_scan
+  - deploy
+
+branching:
+  default_branch: "main"
+  protected_branches: ["main", "staging"]
+  versioning: "semver"  # (semantic versioning)

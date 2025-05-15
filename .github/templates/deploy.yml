@@ -1,0 +1,24 @@
+name: Deploy
+
+needs: [build]
+
+jobs:
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/download-artifact@v3
+      with:
+        name: build-output
+    - name: Deploy
+      run: |
+        case "${{ env.DEPLOY_METHOD }}" in
+          "docker")
+            docker build -t myapp .
+            docker push myrepo/myapp:${{ github.sha }}
+            ;;
+          "terraform")
+            terraform init
+            terraform apply -auto-approve
+            ;;
+        esac
